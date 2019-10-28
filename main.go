@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -15,7 +16,29 @@ import (
 const inDir string = "./input/"
 const outDir string = "./output/"
 
+var arg map[string]bool
+
 func main() {
+
+	arg = map[string]bool{"grayscale": false}
+
+	fGray := flag.Bool("g", false, "apply grayscale filter")
+	flag.Parse()
+	arg["grayscale"] = *fGray
+
+	chkParams := false
+
+	for _, value := range arg {
+		if value == true {
+			chkParams = true
+			break
+		}
+	}
+
+	if !chkParams {
+		flag.Usage()
+		os.Exit(0)
+	}
 
 	if _, err := os.Stat(inDir); os.IsNotExist(err) {
 		err = os.Mkdir(inDir, 0775)
@@ -38,6 +61,7 @@ func main() {
 	input := listDir()
 
 	var wg sync.WaitGroup
+
 	wg.Add(len(input))
 
 	for _, f := range input {
@@ -83,7 +107,11 @@ func restoreImage(pixel [][]Pixel, size ImgSize, file string) string {
 
 	for x := 0; x < size.W; x++ {
 		for y := 0; y < size.H; y++ {
-			px := toGray(pixel[y][x])
+			var px = Pixel{R: 0, G: 0, B: 0, A: 0}
+			if arg["grayscale"] {
+				px = toGray(pixel[y][x])
+			}
+
 			clr := pixelToRGBA(px)
 			img.Set(x, y, clr)
 		}
